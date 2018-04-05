@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+{% block body %}
+<div id="main">
+  <ul>
+    <li v-for="(name, i) in signals" key="name"
+      @click="emit(name)" style="cursor: pointer" >
+      ${ name }
+      <span @click.stop="forget(name)">[X]</span>
+    </li>
+  </ul>
+  <input v-model="new_name">
+  <button @click="learn(new_name)">Learn</button>
+  <p>${ state }</p>
+</div>
+<script>
+  const api = "./api";
+  const app = new Vue({
+    delimiters: ['${', '}'],
+    el: "#main",
+    data() { return {
+        signals: [],
+        new_name: "sample",
+        state: "",
+      };
+    },
+    methods: {
+      update() {
+        axios.get(api + "/signals").
+          then((res) => {
+            this.signals = res.data;
+          });
+      },
+      emit(name) {
+        axios.get(`${api}/signal/${name}/emit`);
+      },
+      learn(name) {
+        this.state = "learing mode";
+        axios.get(`${api}/signal/${name}/learn`).
+        then(() => { 
+          this.state = "";
+          this.update();
+        });
+      },
+      forget(name) {
+        if (confirm(`Delete ${name}`)) {
+          axios.get(`${api}/signal/${name}/forget`).
+          then(() => { this.update();});
+        }
+      },
+    },
+    created(){
+      this.update();
+    },
+  });
+</script>
+{% endblock %}
