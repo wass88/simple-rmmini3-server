@@ -3,6 +3,7 @@ import broadlink
 import os.path
 import pickle
 import json
+import traceback
 from time import sleep
 
 class SignalDB:
@@ -39,7 +40,7 @@ class SignalDB:
         return self.db["signals"].get(name)
 
     def signal_list(self):
-        return list(self.db["signals"].keys())
+        return list(sorted(self.db["signals"].keys()))
 
 class RemoteController:
     def __init__(self):
@@ -63,12 +64,21 @@ class RemoteController:
             self.db.set_signal(name, signal)
             return {"status": "ok"}
 
-    def emit(self, name):
-        signal = self.db.get_signal(name)
-        if signal is None:
-            return {"status": "ng"}
-        self.device.send_data(signal)
-        return {"status": "ok"}
+    def emit(self, name, retry_times = 3, retry_span = 15):
+        tried = 0
+        last_exc = ""
+        while tried < retry_times:
+            try:
+                signal = self.db.get_signal(name)
+                if signal is None:
+                    return {"status": "ng", "except": "Missing Signal"}
+                self.device.send_data(signal)
+                return {"status": "ok"}
+            except:
+                last_exc = traceback.format_exc()
+                tried += 1
+                sleep(retry_span)
+        return {"status": "ng", "except": last_exc}
 
     def forget(self, name):
         self.db.del_signal(name)

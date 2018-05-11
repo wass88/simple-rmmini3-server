@@ -2,10 +2,14 @@
 {% block body %}
 <div id="main">
   <ul>
-    <li v-for="(name, i) in signals" key="name"
-      @click="emit(name)" style="cursor: pointer" >
+    <li v-for="(name, i) in signals" key="name">
+      <span @click="emit(name)" style="cursor: pointer; text-decoration: underline" >
       ${ name }
+      </span>
       <span @click.stop="forget(name)">[X]</span>
+      <a :href="`./api/signal/${name}/emit`">
+        [Link]
+      </a>
     </li>
   </ul>
   <input v-model="new_name">
